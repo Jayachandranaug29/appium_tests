@@ -72,13 +72,13 @@ services:
       - APPIUM=true
       - SELENIUM_HOST=selenium_hub
       - AUTO_RECORD=true
-#  java-maven:
-#    image: srinivasansekar/javamvn
-#    container_name: javamvn
-#    depends_on:
-#      - nexus_7.1.1
-#    volumes:
-#      - ./:/home
-#    command: mvn clean test
-#    links:
-#      - real_device:localhost
+  java-maven:
+    image: srinivasansekar/javamvn
+    container_name: javamvn
+    depends_on:
+      - nexus_7.1.1
+    volumes:
+      - ./:/home
+    command: mvn clean test
+    links:
+      - real_device:localhost
