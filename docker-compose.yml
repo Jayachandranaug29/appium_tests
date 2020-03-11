@@ -1,0 +1,84 @@
+# Note: It requires docker-compose 1.13.0
+#
+# Usage: docker-compose up -d
+version: "2.2"
+
+services:
+  # Selenium hub
+  selenium_hub:
+    image: selenium/hub:3.14.0-curium
+    ports:
+      - 4444:4444
+      - 4723:4723
+    volumes:
+      - $PWD/Simple_Calculator.apk:/root/tmp
+
+  # There is a bug for using appium. Issue: https://github.com/budtmo/docker-android/issues/73
+  # Real devices
+  #real_device:
+  #  image: budtmo/docker-android-real-device
+  #  privileged: true
+  #  depends_on:
+  #    - selenium_hub
+  #  ports:
+  #    - 6080:6080
+  #  volumes:
+  #    - ./video-real-device:/tmp/video
+  #    - /dev/bus/usb:/dev/bus/usb
+  #    - ~/.android:/root/.android
+  #  environment:
+  #    - CONNECT_TO_GRID=true
+  #    - APPIUM=true
+  #    - SELENIUM_HOST=selenium_hub
+  #    - AUTO_RECORD=true
+  #    - BROWSER_NAME=chrome
+
+  # Using Appium Docker Android
+  real_device:
+    image: appium/appium
+    depends_on:
+      - selenium_hub
+    network_mode: "service:selenium_hub"
+    privileged: true
+    volumes:
+      - .:/home/test
+      - /dev/bus/usb:/dev/bus/usb
+      - ~/.android:/root/.android
+      - $PWD/example/sample_apk:/root/tmp
+    environment:
+      - CONNECT_TO_GRID=true
+      - SELENIUM_HOST=selenium_hub
+      # Enable it for msite testing
+      #- BROWSER_NAME=chrome
+
+  # Docker-Android for Android application testing
+  nexus_7.1.1:
+    image: budtmo/docker-android-x86-7.1.1
+    privileged: true
+    # Increase scale number if needed
+    scale: 1
+    depends_on:
+      - selenium_hub
+      - real_device
+    ports:
+      - 6080
+    # Change path of apk that you want to test. I use sample_apk that I provide in folder "example"
+    volumes:
+      - $PWD/example/sample_apk:/root/tmp/sample_apk
+      - ./video-nexus_7.1.1:/tmp/video
+    environment:
+      - DEVICE=Nexus 5
+      - CONNECT_TO_GRID=true
+      - APPIUM=true
+      - SELENIUM_HOST=selenium_hub
+      - AUTO_RECORD=true
+#  java-maven:
+#    image: srinivasansekar/javamvn
+#    container_name: javamvn
+#    depends_on:
+#      - nexus_7.1.1
+#    volumes:
+#      - ./:/home
+#    command: mvn clean test
+#    links:
+#      - real_device:localhost
